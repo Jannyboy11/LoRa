@@ -37,7 +37,15 @@ float magnetoXdif = 0;
 float magnetoYdif = 0;
 float magnetoZdif = 0;
 
+unsigned int loopCount = 0;
+
 unsigned long lastSent = 0;
+
+unsigned long lastTimestamp = 0;
+uint32_t lastLat = 0;
+uint32_t lastLong = 0;
+
+bool firstSecond = false; //false = first, true = second;
 
 //========================
 
@@ -88,6 +96,33 @@ void sendData() {
   txBuffer[9] = longitude & 0xFF;
 
   //send
+  myLora.txBytes(txBuffer, sizeof(txBuffer));
+
+  //set the last timestamp for a big packet
+  lastTimestamp = timestamp;
+  lastLat = latitude;
+  lastLong = longitude;
+}
+
+void sendLessData() {
+  //small packet. contains timestamp differences, lat differences, long differences 
+
+  uint8_t txBuffer[3];
+
+  sodaq_gps.scan();
+
+  uint32_t timestamp = unixTimestamp(sodaq_gps.getYear(), sodaq_gps.getMonth(), sodaq_gps.getDay(),
+    sodaq_gps.getHour(), sodaq_gps.getMinute(), sodaq_gps.getSecond());
+
+  
+  unsigned long timeStampDif = timestamp - lastTimestamp;
+  uint32_t latDif = ((sodaq_gps.getLat() + 90) / 180) * 16777215 - lastLat;
+  uint32_t longDif = ((sodaq_gps.getLon() + 180) / 360) * 16777215 - lastLong;
+  
+  txBuffer[0] = 0x80 | timeStampDif;
+  txBuffer[1] = latDif;
+  txBuffer[2] = longDif;
+
   myLora.txBytes(txBuffer, sizeof(txBuffer));
 }
 
@@ -187,8 +222,7 @@ void initialize_radio()
 // https://developer.mbed.org/questions/4552/Get-timestamp-via-GPS/
 unsigned long unixTimestamp(int year, int month, int day,
               int hour, int minute, int sec)
-{
-  
+{  
   const short days_since_beginning_of_year[12] = {0,31,59,90,120,151,181,212,243,273,304,334};
  
   int leap_years = ((year-1)-1968)/4
@@ -272,18 +306,25 @@ void loop()
 
   SerialUSB.println("");
 
-  //send data if allowed
-  if (canSend() && isTurning()) {
+  //send small packet 5 seconds after a big packet
+  if (loopCount == 5) {
+    sendLessData();
+  }
 
+  //send a big packet if allowed
+  if (canSend() && isTurning()) {
     SerialUSB.println("*********");
     SerialUSB.println("isTurning");
     SerialUSB.println("*********");
     
     //sendData(); TODO uncomment this
+    
     lastSent = millis();
+    loopCount = 0;
   }
 
   delay(1000);
-  
+
+  loopCount++;
 }
 
