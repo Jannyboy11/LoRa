@@ -24,10 +24,6 @@ float magnetoXdif = 0;
 float magnetoYdif = 0;
 float magnetoZdif = 0;
 
-float abs(float val) {
-  return val < 0 ? -val : val;
-}
-
 unsigned long unixTimestamp(int year, int month, int day,
               int hour, int min, int sec)
 {
@@ -191,7 +187,7 @@ void loop() {
 
   SerialUSB.println("");
 
-  if (isTurning())) {
+  if (isTurning()) {
     sendData();
   }
 
