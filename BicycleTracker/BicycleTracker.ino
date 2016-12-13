@@ -43,7 +43,22 @@ void sendData() {
   //get new gps information
   sodaq_gps.scan();
 
-  //get timestamp
+  SerialUSB.println("\r\nGPS times:");
+  SerialUSB.print("year: ");
+  SerialUSB.println(sodaq_gps.getYear());
+  SerialUSB.print("month: ");
+  SerialUSB.println(sodaq_gps.getMonth());
+  SerialUSB.print("day: ");
+  SerialUSB.println(sodaq_gps.getDay());
+  SerialUSB.print("hour: ");
+  SerialUSB.println(sodaq_gps.getHour());
+  SerialUSB.print("minute: ");
+  SerialUSB.println(sodaq_gps.getMinute());
+  SerialUSB.print("second: ");
+  SerialUSB.println(sodaq_gps.getSecond());
+  SerialUSB.println("\r\n");
+
+  //get timestamp (in seconds after 1 jan 1970)
   uint32_t timestamp = unixTimestamp(sodaq_gps.getYear(), sodaq_gps.getMonth(), sodaq_gps.getDay(),
     sodaq_gps.getHour(), sodaq_gps.getMinute(), sodaq_gps.getSecond());
 
@@ -153,8 +168,9 @@ void initialize_radio()
 
 // https://developer.mbed.org/questions/4552/Get-timestamp-via-GPS/
 unsigned long unixTimestamp(int year, int month, int day,
-              int hour, int min, int sec)
+              int hour, int minute, int sec)
 {
+  
   const short days_since_beginning_of_year[12] = {0,31,59,90,120,151,181,212,243,273,304,334};
  
   int leap_years = ((year-1)-1968)/4
@@ -166,8 +182,13 @@ unsigned long unixTimestamp(int year, int month, int day,
  
   if ( (month>2) && (year%4==0 && (year%100!=0 || year%400==0)) )
     days_since_1970 += 1; /* +leap day, if year is a leap year */
- 
-  return sec + 60 * ( min + 60 * (hour + 24*days_since_1970) );
+
+  SerialUSB.println("\r\n");
+  SerialUSB.print("days since 1970: ");
+  SerialUSB.print(days_since_1970);
+  SerialUSB.println("\r\n");
+  
+  return sec + 60 * ( minute + 60 * (hour + 24*days_since_1970) );
 }
 
 void setup() 
