@@ -181,78 +181,16 @@ void setup()
   SerialUSB.println("Testing Accelerometer");
   
   initialize_radio();
-  myLora.tx("Sodaq One Accelerometer");
   //myLora.setDR(0);
   
   setLsm303Active(true);
   
   // initialize GPS with enable on pin 27
   sodaq_gps.init(27);
-
-  // myLora.setDR(0); //set the datarate at which we tx. DR5 is the best.
-  pinMode(LED_BLUE, OUTPUT);
-  digitalWrite(LED_BLUE, HIGH);
-  pinMode(LED_RED, OUTPUT);
-  digitalWrite(LED_RED, HIGH);
-  pinMode(LED_GREEN, OUTPUT);
-  digitalWrite(LED_GREEN, HIGH);
 }
 
 void loop()
 {
-
-//  SerialUSB.print("X=");
-//  SerialUSB.println(max_x);
-//  SerialUSB.print("Y=");
-//  SerialUSB.println(max_y);
-//  SerialUSB.print("Z=");
-//  SerialUSB.println(max_z);
-//
-//  SerialUSB.print("lat=");
-//  SerialUSB.println(sodaq_gps.getLat());
-//  SerialUSB.print("lon=");
-//  SerialUSB.println(sodaq_gps.getLon());
-//
-//  // build a binary packet
-//  LatitudeBinary = ((sodaq_gps.getLat() + 90) / 180) * 16777215;
-//  LongitudeBinary = ((sodaq_gps.getLon() + 180) / 360) * 16777215;
-//
-//  //timestamp
-//  txBuffer[0] = ( timestamp >> 24) & 0xFF;
-//  txBuffer[1] = ( timestamp >> 16) & 0xFF;
-//  txBuffer[2] = ( timestamp >> 8) & 0xFF;
-//  txBuffer[3] = ( timestamp) & 0xFF;
-//
-//  //3 bytes lat
-//  txBuffer[4] = ( LatitudeBinary >> 16 ) & 0xFF;
-//  txBuffer[5] = ( LatitudeBinary >> 8 ) & 0xFF;
-//  txBuffer[6] = LatitudeBinary & 0xFF;
-//
-//  //3 bytes lon
-//  txBuffer[7] = ( LongitudeBinary >> 16 ) & 0xFF;
-//  txBuffer[8] = ( LongitudeBinary >> 8 ) & 0xFF;
-//  txBuffer[9] = LongitudeBinary & 0xFF;
-//
-//  //max_x=2,
-//  txBuffer[10] = ( max_x >> 8 ) & 0xFF;
-//  txBuffer[11] = max_x & 0xFF;
-//  
-//  //max_y=2,
-//  txBuffer[12] = ( max_y >> 8 ) & 0xFF;
-//  txBuffer[13] = max_y & 0xFF;
-//  
-//  //max_z=2,
-//  txBuffer[14] = ( max_z >> 8 ) & 0xFF;
-//  txBuffer[15] = max_z & 0xFF;
-//
-//  digitalWrite(LED_BLUE, LOW);
-//  myLora.txBytes(txBuffer, sizeof(txBuffer));
-//  digitalWrite(LED_BLUE, HIGH);
-//  
-//  SerialUSB.println();
-//  max_x = 0;
-//  max_y = 0;
-//  max_z = 0;
 
   lsm303.read();
 
