@@ -188,6 +188,7 @@ void loop() {
   SerialUSB.println("");
 
   if (isTurning()) {
+    SerialUSB.println("isTurning");
     sendData();
   }
 
