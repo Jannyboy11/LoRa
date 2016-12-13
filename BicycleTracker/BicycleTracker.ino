@@ -17,7 +17,9 @@ int16_t max_z = 0;
 LSM303 lsm303;
 rn2xx3 myLora(Serial1);
 
+const int ACCEL_THRESHOLD = 100;
 const int MAGNETO_THRESHOLD = 200;
+const unsigned long MILLIS_BETWEEN_SENDS = 5000;
 
 float lastAccelX = 0;
 float lastAccelY = 0;
@@ -35,6 +37,9 @@ float magnetoXdif = 0;
 float magnetoYdif = 0;
 float magnetoZdif = 0;
 
+unsigned long lastSent = 0;
+
+//========================
 
 void sendData() {
   //create a new 10-bytes buffer
@@ -88,10 +93,23 @@ void sendData() {
 
 bool isTurning() {
   //magneto meter turning threshold: 200
- return abs(magnetoXdif) > MAGNETO_THRESHOLD ||
-        abs(magnetoYdif) > MAGNETO_THRESHOLD ||
-        abs(magnetoZdif) > MAGNETO_THRESHOLD ;
+  bool turning =  abs(magnetoXdif) > MAGNETO_THRESHOLD ||
+                  abs(magnetoYdif) > MAGNETO_THRESHOLD ||
+                  abs(magnetoZdif) > MAGNETO_THRESHOLD ;
+
+  turning = turning || abs(accelYdif) > ACCEL_THRESHOLD;
+  //turning = turning && abs(accelZdif) < ACCEL_THRESHOLD;
+  //turning = turning && abs(accelXdif) > ACCEL_THRESHOLD;
+  turning = turning || abs(accelYdif) > 1000;
+
+  return turning;
 }
+
+
+bool canSend() {
+  return millis() - lastSent > MILLIS_BETWEEN_SENDS;
+}
+
 
 // =========================================================================================
 
@@ -227,6 +245,9 @@ void loop()
   SerialUSB.print("accelZdif = ");
   SerialUSB.println(accelZdif = accelZ - lastAccelZ);
 
+  SerialUSB.print("accelXdif * accelZdif = ");
+  SerialUSB.println(accelXdif * accelZdif);
+
   lastAccelX = accelX;
   lastAccelY = accelY;
   lastAccelZ = accelZ;
@@ -251,9 +272,15 @@ void loop()
 
   SerialUSB.println("");
 
-  if (isTurning()) {
+  //send data if allowed
+  if (canSend() && isTurning()) {
+
+    SerialUSB.println("*********");
     SerialUSB.println("isTurning");
-    sendData();
+    SerialUSB.println("*********");
+    
+    //sendData(); TODO uncomment this
+    lastSent = millis();
   }
 
   delay(1000);
