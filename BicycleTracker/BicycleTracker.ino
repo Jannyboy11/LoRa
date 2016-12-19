@@ -179,8 +179,7 @@ void setLsm303Active(bool on)
     }
 }
 
-void initialize_radio()
-{
+void initialize_radio() {
   delay(100); //wait for the RN2xx3's startup message
   while(Serial1.available()){
     Serial1.read();
@@ -199,24 +198,47 @@ void initialize_radio()
   SerialUSB.println("RN2xx3 firmware version:");
   SerialUSB.println(myLora.sysver());
 
+  bool lora = false;
+  while(!lora) {
+    lora = initialize_iot();
+    if(!lora)
+      lora = initialize_ttn();
+    if(!lora)
+      SerialUSB.println("Retrying in one minute.");
+      delay(60000);
+  }
+}
+
+bool initialize_iot()
+{
   //configure your keys and join the network
-  SerialUSB.println("Trying to join LoRaWAN network");
+  SerialUSB.println("Trying to join IoT-LoRaWAN network");
   bool join_result = false;
-  
-  //ABP: initABP(String addr, String AppSKey, String NwkSKey);
-  //join_result = myLora.initABP("02017201", "8D7FFEF938589D95AAD928C2E2E7E48F", "AE17E567AECC8787F749A62F5541D522");
   
   //OTAA: initOTAA(String AppEUI, String AppKey);
   join_result = myLora.initOTAA("1122334455667788", "11111111111111111111111111111111");
 
-  while(!join_result)
-  {
-    SerialUSB.println("Unable to join. Are your keys correct, and do you have LoRaWAN coverage?");
-    delay(60000); //delay a minute before retry
-    join_result = myLora.init();
-  }
-  SerialUSB.println("Successfully joined LoRaWAN network");
+  if(!join_result)
+    SerialUSB.println("Unable to join. Do you have IoT-LoRaWAN coverage?");
+  else
+    SerialUSB.println("Successfully joined IoT-LoRaWAN network");
+  return join_result;  
+}
+
+bool initialize_ttn()
+{
+  //configure your keys and join the network
+  SerialUSB.println("Trying to join TTN-LoRaWAN network");
+  bool join_result = false;
   
+  //OTAA: initOTAA(String AppEUI, String AppKey);
+  join_result = myLora.initOTAA("0x70B3D57EF0001BEA", "11111111111111111111111111111111");
+
+  if(!join_result)
+    SerialUSB.println("Unable to join. Do you have TTN-LoRaWAN coverage?");
+  else
+    SerialUSB.println("Successfully joined TTN-LoRaWAN network");
+  return join_result;  
 }
 
 // https://developer.mbed.org/questions/4552/Get-timestamp-via-GPS/
