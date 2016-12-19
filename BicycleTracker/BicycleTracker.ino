@@ -234,7 +234,7 @@ bool initialize_ttn()
   bool join_result = false;
   
   //OTAA: initOTAA(String AppEUI, String AppKey);
-  join_result = myLora.initOTAA("0x70B3D57EF0001BEA", "11111111111111111111111111111111");
+  join_result = myLora.initOTAA("70B3D57EF0001BEA", "3C6697646C5961CD6502FF77326E2EE0");
 
   if(!join_result)
     SerialUSB.println("Unable to join. Do you have TTN-LoRaWAN coverage?");
