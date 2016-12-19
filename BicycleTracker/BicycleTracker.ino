@@ -204,6 +204,8 @@ void initialize_radio() {
     if(!lora)
       lora = initialize_ttn();
     if(!lora)
+      lora = initialize_kpn();
+    if(!lora)
       SerialUSB.println("Retrying in one minute.");
       delay(60000);
   }
@@ -241,6 +243,10 @@ bool initialize_ttn()
   return join_result;  
 }
 
+bool initialize_kpn() {
+  //TODO
+  return false;
+}
 // https://developer.mbed.org/questions/4552/Get-timestamp-via-GPS/
 unsigned long unixTimestamp(int year, int month, int day,
               int hour, int minute, int sec)
