@@ -17,8 +17,8 @@ int16_t max_z = 0;
 LSM303 lsm303;
 rn2xx3 myLora(Serial1);
 
-const int ACCEL_THRESHOLD = 1000;
-const int MAGNETO_THRESHOLD = 300;
+const int ACCEL_THRESHOLD = 800;
+const int MAGNETO_THRESHOLD = 200;
 const unsigned long MILLIS_BETWEEN_SENDS = 10000;
 const unsigned long MILLIS_BETWEEN_BIG_AND_SMALL_PACKET = 5000;
 
@@ -310,7 +310,7 @@ void loop()
   }*/
 
   //send a big packet if allowed
-  if (canSend() && isTurning() && firstSecond == First) {
+  if (canSend() && isTurning()) {
     SerialUSB.println("SendData");
     sendData();
     //firstSecond = Second;
