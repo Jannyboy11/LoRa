@@ -17,9 +17,10 @@ int16_t max_z = 0;
 LSM303 lsm303;
 rn2xx3 myLora(Serial1);
 
-const int ACCEL_THRESHOLD = 100;
-const int MAGNETO_THRESHOLD = 200;
-const unsigned long MILLIS_BETWEEN_SENDS = 5000;
+const int ACCEL_THRESHOLD = 1000;
+const int MAGNETO_THRESHOLD = 300;
+const unsigned long MILLIS_BETWEEN_SENDS = 10000;
+const unsigned long MILLIS_BETWEEN_BIG_AND_SMALL_PACKET = 5000;
 
 float lastAccelX = 0;
 float lastAccelY = 0;
@@ -45,7 +46,8 @@ unsigned long lastTimestamp = 0;
 uint32_t lastLat = 0;
 uint32_t lastLong = 0;
 
-bool firstSecond = false; //false = first, true = second;
+enum FirstSecond { First, Second };
+FirstSecond firstSecond = First;
 
 //========================
 
@@ -55,7 +57,7 @@ void sendData() {
   
   //get new gps information
   sodaq_gps.scan();
-
+/*
   SerialUSB.println("\r\nGPS times:");
   SerialUSB.print("year: ");
   SerialUSB.println(sodaq_gps.getYear());
@@ -70,7 +72,7 @@ void sendData() {
   SerialUSB.print("second: ");
   SerialUSB.println(sodaq_gps.getSecond());
   SerialUSB.println("\r\n");
-
+*/
   //get timestamp (in seconds after 1 jan 1970)
   uint32_t timestamp = unixTimestamp(sodaq_gps.getYear(), sodaq_gps.getMonth(), sodaq_gps.getDay(),
     sodaq_gps.getHour(), sodaq_gps.getMinute(), sodaq_gps.getSecond());
@@ -135,7 +137,7 @@ bool isTurning() {
   turning = turning || abs(accelYdif) > ACCEL_THRESHOLD;
   //turning = turning && abs(accelZdif) < ACCEL_THRESHOLD;
   //turning = turning && abs(accelXdif) > ACCEL_THRESHOLD;
-  turning = turning || abs(accelYdif) > 1000;
+  //turning = turning || abs(accelYdif) > 1000;
 
   return turning;
 }
@@ -201,13 +203,10 @@ void initialize_radio() {
   bool lora = false;
   while(!lora) {
     lora = initialize_iot();
-    if(!lora)
-      lora = initialize_ttn();
-    if(!lora)
-      lora = initialize_kpn();
-    if(!lora)
+    if(!lora) {
       SerialUSB.println("Retrying in one minute.");
       delay(60000);
+    }
   }
 }
 
@@ -227,26 +226,6 @@ bool initialize_iot()
   return join_result;  
 }
 
-bool initialize_ttn()
-{
-  //configure your keys and join the network
-  SerialUSB.println("Trying to join TTN-LoRaWAN network");
-  bool join_result = false;
-  
-  //OTAA: initOTAA(String AppEUI, String AppKey);
-  join_result = myLora.initOTAA("70B3D57EF0001BEA", "3C6697646C5961CD6502FF77326E2EE0");
-
-  if(!join_result)
-    SerialUSB.println("Unable to join. Do you have TTN-LoRaWAN coverage?");
-  else
-    SerialUSB.println("Successfully joined TTN-LoRaWAN network");
-  return join_result;  
-}
-
-bool initialize_kpn() {
-  //TODO
-  return false;
-}
 // https://developer.mbed.org/questions/4552/Get-timestamp-via-GPS/
 unsigned long unixTimestamp(int year, int month, int day,
               int hour, int minute, int sec)
@@ -262,12 +241,6 @@ unsigned long unixTimestamp(int year, int month, int day,
  
   if ( (month>2) && (year%4==0 && (year%100!=0 || year%400==0)) )
     days_since_1970 += 1; /* +leap day, if year is a leap year */
-
-  SerialUSB.println("\r\n");
-  SerialUSB.print("days since 1970: ");
-  SerialUSB.print(days_since_1970);
-  SerialUSB.println("\r\n");
-  
   return sec + 60 * ( minute + 60 * (hour + 24*days_since_1970) );
 }
 
@@ -279,8 +252,6 @@ void setup()
   SerialUSB.begin(57600);
   Serial1.begin(57600);
 
-  SerialUSB.println("Testing Accelerometer");
-  
   initialize_radio();
   //myLora.setDR(0);
   
@@ -292,7 +263,6 @@ void setup()
 
 void loop()
 {
-
   lsm303.read();
 
   //read and update accelerometer values (milli-g-force)
@@ -309,7 +279,7 @@ void loop()
 
   SerialUSB.print("accelXdif * accelZdif = ");
   SerialUSB.println(accelXdif * accelZdif);
-
+  
   lastAccelX = accelX;
   lastAccelY = accelY;
   lastAccelZ = accelZ;
@@ -327,32 +297,29 @@ void loop()
   SerialUSB.println(magnetoYdif = magnetoY - lastMagnetoY);
   SerialUSB.print("magnetoZdif = ");
   SerialUSB.println(magnetoZdif = magnetoZ - lastMagnetoZ);
-
+  
   lastMagnetoX = magnetoX;
   lastMagnetoY = magnetoY;
   lastMagnetoZ = magnetoZ;
 
-  SerialUSB.println("");
-
   //send small packet 5 seconds after a big packet
-  if (loopCount == 5) {
+  /*if (loopCount == 5 && millis() - lastSent > MILLIS_BETWEEN_BIG_AND_SMALL_PACKET && firstSecond == Second) {
+    SerialUSB.println("SendLessData");
     sendLessData();
-  }
+    firstSecond = First;
+  }*/
 
   //send a big packet if allowed
-  if (canSend() && isTurning()) {
-    SerialUSB.println("*********");
-    SerialUSB.println("isTurning");
-    SerialUSB.println("*********");
-    
-    //sendData(); TODO uncomment this
-    
+  if (canSend() && isTurning() && firstSecond == First) {
+    SerialUSB.println("SendData");
+    sendData();
+    //firstSecond = Second;
     lastSent = millis();
-    loopCount = 0;
+    //loopCount = 0;
   }
 
   delay(1000);
 
-  loopCount++;
+  //loopCount++;
 }
 
