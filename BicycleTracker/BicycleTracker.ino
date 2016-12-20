@@ -17,8 +17,8 @@ int16_t max_z = 0;
 LSM303 lsm303;
 rn2xx3 myLora(Serial1);
 
-const int ACCEL_THRESHOLD = 800;
-const int MAGNETO_THRESHOLD = 200;
+const int ACCEL_THRESHOLD = 650;
+const int MAGNETO_THRESHOLD = 250;
 const unsigned long MILLIS_BETWEEN_SENDS = 10000;
 const unsigned long MILLIS_BETWEEN_BIG_AND_SMALL_PACKET = 5000;
 
